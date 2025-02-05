@@ -165,9 +165,9 @@ app.get('/', (req, res) => {
 });
 
 // API endpoint: GET /api/services
-app.get('/api/services', async (req, res) => {
+app.get('/api/services', (req, res) => {
   try {
-    const services = await Service.find().limit(20);;
+    const services = Service.find().limit(20);;
     res.json(services);
   } catch (err) {
     res.status(500).json({ message: err.message });
