@@ -121,4 +121,5 @@ const startServer = async () => {
 };
 
 // Start the server and connect to DB
-startServer();
+// startServer();
+module.exports = app;
