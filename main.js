@@ -244,9 +244,10 @@ const startServer = async () => {
   });
 
   // Catch-all route for all other requests
-  app.get('*', (req, res) => {
+  app.get('/', (req, res) => {
     res.status(200).send('Welcome to the main page!');
   });
+  
 
   // Set the port number for the server
   const PORT = process.env.PORT || 5000;
