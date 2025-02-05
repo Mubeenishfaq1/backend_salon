@@ -131,8 +131,6 @@
 // main.js
 
 // Import required modules
-// main.js
-
 const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
@@ -149,18 +147,17 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-// Alternatively, app.use(express.json());
+// Alternatively, you can use: app.use(express.json());
 
-// Global middleware to ensure DB connection
-app.use(async (req, res, next) => {
-  try {
-    await connectDb();
-    next();
-  } catch (error) {
-    console.error("DB connection error in middleware:", error);
-    res.status(500).json({ message: "Database connection failed" });
-  }
+// Immediately connect to the database
+// Note: In serverless functions, you might want to cache the connection between invocations.
+connectDb().then(() => {
+  console.log("Database connected");
+}).catch((err) => {
+  console.error("Database connection error:", err);
 });
+
+// Define your routes at the top-level:
 
 // Root route
 app.get('/', (req, res) => {
@@ -170,11 +167,9 @@ app.get('/', (req, res) => {
 // API endpoint: GET /api/services
 app.get('/api/services', async (req, res) => {
   try {
-    // Query the database for services (limit added for testing)
-    const services = await Service.find().limit(20);
+    const services = await Service.find();
     res.json(services);
   } catch (err) {
-    console.error('Error fetching services:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -182,12 +177,16 @@ app.get('/api/services', async (req, res) => {
 // API endpoint: POST /api/services
 app.post('/api/services', async (req, res) => {
   const { name, description, price, images } = req.body;
-  const newService = new Service({ name, description, price, images });
+  const newService = new Service({
+    name,
+    description,
+    price,
+    images,
+  });
   try {
     const savedService = await newService.save();
     res.status(201).json(savedService);
   } catch (err) {
-    console.error('Error saving service:', err);
     res.status(400).json({ message: err.message });
   }
 });
@@ -195,6 +194,7 @@ app.post('/api/services', async (req, res) => {
 // Login route: POST /api/login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
+  console.log(username, password);
   try {
     const user = await User.findOne({ username });
     if (!user) {
@@ -206,13 +206,12 @@ app.post('/api/login', async (req, res) => {
     }
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || 'your_jwt_secret_key',
+      'your_jwt_secret_key', // In production, use an environment variable
       { expiresIn: '1h' }
     );
     const isAdmin = user.role === 'admin';
     res.json({ token, isAdmin });
   } catch (err) {
-    console.error('Login error:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -235,7 +234,6 @@ app.post('/api/register', async (req, res) => {
     await newUser.save();
     res.status(201).json({ message: 'User created successfully' });
   } catch (err) {
-    console.error('Registration error:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -245,10 +243,10 @@ app.get('/home', (req, res) => {
   res.status(200).json('Welcome, your app is working well');
 });
 
-// Catch-all route
+// Catch-all route (optional if you need a fallback)
 app.get('*', (req, res) => {
   res.status(200).send('Welcome to the main page!');
 });
 
-// Do not call app.listen() for Vercel serverless functions.
+// Do not call app.listen() for Vercel serverless functions
 module.exports = app;
