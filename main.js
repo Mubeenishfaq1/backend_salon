@@ -140,8 +140,6 @@ const jwt = require('jsonwebtoken');
 const User = require('./models/Users'); // Import the User model
 const Service = require('./models/Service.js');
 const connectDb = require('./connection.js');
-const serverless = require('serverless-http');
-
 
 // Create the Express app
 const app = express();
@@ -251,4 +249,4 @@ app.get('*', (req, res) => {
 });
 
 // Do not call app.listen() for Vercel serverless functions
-module.exports.handler = serverless(app);
+module.exports = app;
